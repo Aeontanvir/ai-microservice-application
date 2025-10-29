@@ -62,13 +62,13 @@ Components
 - Config Server (Spring Cloud Config Server): centralized externalized configuration for all microservices.
 - Message Broker (RabbitMQ): used for async, event-driven communication (e.g., activity events, recommendation requests, background processing).
 - Datastores:
-   - MySQL/PostgreSQL: relational storage for user accounts and relational data (User service).
-   - MongoDB: document storage for activity logs, AI results, and other unstructured or semi-structured data used by the AI service and activity service.
+ - Datastores:
+  - MySQL: relational storage used by the User service (user accounts, profiles and related relational data).
+  - MongoDB: document storage used by the AI Recommendation Service for AI artifacts, generated recommendations and other semi-structured results.
 - Core Services:
-   - User Service: manages user accounts, profiles and persistence in the relational DB.
-   - Activity Service: ingests workout/activity events and stores them in MongoDB. Publishes events to RabbitMQ when activity data needs processing.
-   - AI Recommendation Service: consumes messages from RabbitMQ or accepts REST requests to generate personalized workout/nutrition recommendations. Stores AI artifacts/results in MongoDB and may push results back via messaging or expose them via REST.
-   - Workout/Nutrition Services: domain services that manage plans, goals, progress and interact with AI service for personalization.
+  - User Service: manages user accounts, profiles and persistence in MySQL.
+  - Activity Service: ingests workout/activity events, enriches events by calling the User Service synchronously when user data is needed, and publishes activity events to RabbitMQ for downstream processing by the AI service (async).
+  - AI Recommendation Service: consumes messages from RabbitMQ (async) or accepts direct REST requests to generate personalized recommendations. Uses MongoDB to store AI artifacts and generated recommendations and notifies interested parties via messaging or exposes results via REST.
 
 AI Integration
 - The AI Recommendation Service acts as the bridge between application data and the Google Gemini API. Typical flow:
@@ -123,6 +123,23 @@ The project is organized into multiple microservices, each with its own responsi
 ├── ai-service/
 └── frontend/
 ```
+
+Folder mapping (what each directory contains)
+
+- `api-gateway/` — Spring Cloud Gateway project. Routes requests from clients to backend services, enforces auth and cross-cutting concerns (rate limits, CORS, SSL termination, etc.).
+- `service-registry/` — Eureka server (Spring Cloud Netflix) for service discovery. All services register here so the gateway and other services can find them.
+- `config-server/` — Spring Cloud Config Server that serves centralized configurations (profiles, application.yml properties) to all microservices.
+- `auth-service/` — Keycloak or a thin adapter/service for auth integration (realms, clients, roles). If Keycloak is run externally, this folder contains any adapters or helper config.
+- `user-service/` — Spring Boot microservice responsible for user accounts, profiles and persistence in MySQL.
+- `workout-service/` — (optional) Domain service for workout features; not required in the minimal architecture described here.
+- `nutrition-service/` — (optional) Domain service for nutrition features; not required in the minimal architecture described here.
+- `ai-service/` — AI Recommendation Service connecting application data (user/activity history) to Google Gemini: consumes messages from RabbitMQ or REST requests, calls Gemini, stores results in MongoDB and publishes outcomes.
+- `frontend/` — React single-page-application (SPA) providing the web UI. Handles client-side routing, authentication token management, and communication with the API Gateway.
+
+Quick usage notes
+- Each service is intended to be run independently (via `mvn spring-boot:run` or as a Docker container). Use the `config-server` to provide environment-specific properties so services don't require local property changes.
+- For local development, run Keycloak (or the auth adapter), Eureka, Config Server, RabbitMQ and a database before starting domain services.
+
 
 ## 🛠️ Setup Requirements
 

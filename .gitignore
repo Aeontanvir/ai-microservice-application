@@ -1,0 +1,48 @@
+# Project-level gitignore for Full Stack AI Microservice Fitness App
+
+# macOS
+.DS_Store
+
+# Java / Maven
+target/
+out/
+build/
+.classpath
+.project
+.settings/
+
+# Maven wrapper
+.mvn/wrapper/maven-wrapper.jar
+
+# Node
+node_modules/
+dist/
+npm-debug.log*
+yarn-error.log
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+*.sublime-workspace
+*.sublime-project
+
+# Key stores and environment
+*.jks
+*.keystore
+.env
+.env.*
+
+# Logs
+*.log
+logs/
+
+# Docker
+docker-compose.override.yml
+
+# Coverage and reports
+.nyc_output/
+coverage/
+
+# Others
+Thumbs.db
